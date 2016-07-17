@@ -1,0 +1,27 @@
+/**
+* Theme Name: myTheme
+* Theme URI: [none]
+* Description: Child Theme von twentySixteen
+* Author: Christian Marquardt
+* Author URI: [none]/spielwiese
+* Template: twentysixteen
+* Version: 0.0.0
+*/
+
+@import url('../twentysixteen/style.css');
+@import url('https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css');
+h1 {
+	text-transform: uppercase;
+}
+
+.table-striped > tbody > tr:nth-child(odd) > th {
+	background-color: #6699ff;
+}
+
+.table-striped > tbody > tr:nth-child(odd) > td {
+   background-color: #cc9900;
+}
+
+.table-hover tbody tr:hover td {
+    background: #ff6666;
+}	
