@@ -195,15 +195,18 @@ function my_custom_box_function($cd) {
 	// $myArray = get_post_meta($cd->ID, 'song', false);
 	// read all songs from meta data
 	$titleArray = get_post_custom_values('song', $cd->ID);
+	$linkArray = get_post_custom_values('link', $cd->ID);
+	// $linkArray[0] = 'Hello';
 	// cycle through the array (value contains the song)
 	foreach((array)$titleArray as $key => $value) {
 		
 		//  output a checkbox and text input field for each song-->
-		echo '<p><input type="checkbox" name="haken'.$key.'" checked />' . ($key+1) .'. Titel: <input tyüe="text" name="eingabe'. $key.'" value="'.$value.'"/></p>';
+		echo '<p><input type="checkbox" name="haken'.$key.'" checked />' . ($key+1) .'. Titel: <input tyüe="text" name="eingabe'. $key.'" value="'.$value.'"/>';
+		echo 'Link: <input type="text" name="link'.$key.'" size="70" value="'.$linkArray[$key].'"</p>';
 	}
 	// output a text input to add a new song
-	echo 'Neuen Titel eingeben';
-	echo '<p>Titel:<input type="text" name="neu" value="" /></p>';
+	echo '<br>Neuen Titel eingeben';
+	echo '<p>Titel:<input type="text" name="neu" value="" /> Link:<input type="text" name="neulink" value="" size="70"></p>';
 }
 // add the custom metabox
 add_action( 'add_meta_boxes' , 'my_custom_box_create' );
@@ -213,6 +216,7 @@ add_action( 'add_meta_boxes' , 'my_custom_box_create' );
 function cm_cd_save_meta($cd_id) {
 	// read old songs from meta data
 	$oldArray = get_post_custom_values('song', $cd_id);
+	$linkArray = get_post_custom_values('link', $cd_id);
 	//$oldLength = count($oldArray);
 
 
@@ -223,17 +227,24 @@ function cm_cd_save_meta($cd_id) {
 		// if there is no checked checkbox delete the data
 		if(! isset($_POST[('haken'.$key)])) {
 			delete_post_meta($cd_id, 'song', $value);
+			delete_post_meta($cd_id, 'link', $linkArray[$key]);
 		}
 	}
 	
 	// read new input	
-	if(isset($_POST['neu'])) {
+	if( (isset($_POST['neu'])) || (isset($_POST['neulink'])) ) {
 		$newInput = strip_tags($_POST['neu']);
+		$newLink = strip_tags($_POST['neulink']);
 		// add new song if the input is not empty
 		if( $newInput != '') {
 			add_post_meta($cd_id, 'song', $newInput, false);
+			add_post_meta($cd_id, 'link', $newLink, false);
 		}
 	}
+}
+
+// checks an url to be an mp3 file, ie. start with "http://" or "https://" and ends with ".mp3"
+function checkUrlForMp3( $string ) {
 }
 
 add_action('save_post', 'cm_cd_save_meta');
