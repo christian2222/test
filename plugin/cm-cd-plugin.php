@@ -250,7 +250,7 @@ function cm_cd_save_meta($cd_id) {
 function checkUrlForMp3( $string ) {
 	$string = trim($string);
 	// strstr returns the rest of the string, starting at the first occurence of '.mp3'
-	strstr($string,'.mp3') == '.mp3'
+	// strstr($string,'.mp3') == '.mp3' or '.MP3'
 	// strpos(string,suchstring,beginn(optional)) searches for the first occurence of [suchstring] in [string] starting at [beginn]
 	// stripos ""					does the same but ignores case
 	// stripos($string, 'http') == 0 nicht false (= nichts gefunden) (j)
@@ -266,7 +266,7 @@ function checkUrlForMp3( $string ) {
 		$cor_slash = ($sub_slash == 4) || ($sub_slash == 5);
 		// check ending
 		$end = strstr($sring,'.') == '.mp3';
-		$big_end = strstr($string,'.' == '.MP3';
+		$big_end = strstr($string,'.') == '.MP3';
 		// combine for true
 		if ($cor_slash && ($end || $big_end)) return true;
 		// otherwise program flow hits return false at the end
