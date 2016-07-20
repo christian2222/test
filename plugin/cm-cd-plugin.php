@@ -224,6 +224,7 @@ function cm_cd_save_meta($cd_id) {
 	foreach((array)$oldArray as $key => $value) {
 		// $key = number, $value = song
 		update_post_meta($cd_id,'song', $_POST[('eingabe'.$key)],$value);
+		update_post_meta($cd_id,'link', $_POST[('link'.$key)],$linkArray[$key]);
 		// if there is no checked checkbox delete the data
 		if(! isset($_POST[('haken'.$key)])) {
 			delete_post_meta($cd_id, 'song', $value);
@@ -237,6 +238,8 @@ function cm_cd_save_meta($cd_id) {
 		$newLink = strip_tags($_POST['neulink']);
 		// add new song if the input is not empty
 		if( $newInput != '') {
+			// prohibit empty link data
+			if($newLink == '') $newLink='empty'.(count($linkArray)+1);
 			add_post_meta($cd_id, 'song', $newInput, false);
 			add_post_meta($cd_id, 'link', $newLink, false);
 		}
@@ -245,6 +248,31 @@ function cm_cd_save_meta($cd_id) {
 
 // checks an url to be an mp3 file, ie. start with "http://" or "https://" and ends with ".mp3"
 function checkUrlForMp3( $string ) {
+	$string = trim($string);
+	// strstr returns the rest of the string, starting at the first occurence of '.mp3'
+	strstr($string,'.mp3') == '.mp3'
+	// strpos(string,suchstring,beginn(optional)) searches for the first occurence of [suchstring] in [string] starting at [beginn]
+	// stripos ""					does the same but ignores case
+	// stripos($string, 'http') == 0 nicht false (= nichts gefunden) (j)
+	// stripos($string, 'https') == 0 nicht false (= nichts gefunden) (j)
+	// strpos($string, '://') == 4 oder 5 (index begint bei 0) nicht false (= nichts gefunden)
+	$start = stripos($string, 'http');
+	$sec_start= stripos($string, 'https');
+	if($start === false && $sec_start === false) return false; // both do not appear
+	if($start == 0 || $sec_start == 0) { // starts with one of both
+		// check for "://" at position 4 or 5
+		$sub_slash = strpos($string, '://');
+		if($sub_slash === false) return false; // not found
+		$cor_slash = ($sub_slash == 4) || ($sub_slash == 5);
+		// check ending
+		$end = strstr($sring,'.') == '.mp3';
+		$big_end = strstr($string,'.' == '.MP3';
+		// combine for true
+		if ($cor_slash && ($end || $big_end)) return true;
+		// otherwise program flow hits return false at the end
+	}
+	// otherwise no correct mp3-adress
+	return false;
 }
 
 add_action('save_post', 'cm_cd_save_meta');
