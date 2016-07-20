@@ -214,6 +214,12 @@ add_action( 'add_meta_boxes' , 'my_custom_box_create' );
 
 // saving function when "Aktualisieren" is pressed
 function cm_cd_save_meta($cd_id) {
+	// check if metadata already exists
+	$number = get_post_meta($cd_id,'number',true);
+	if($number == '') // = not yet set?
+		$number = 1;
+
+
 	// read old songs from meta data
 	$oldArray = get_post_custom_values('song', $cd_id);
 	$linkArray = get_post_custom_values('link', $cd_id);
@@ -239,9 +245,12 @@ function cm_cd_save_meta($cd_id) {
 		// add new song if the input is not empty
 		if( $newInput != '') {
 			// prohibit empty link data
-			if($newLink == '') $newLink='empty'.(count($linkArray)+1);
+			$number++;
+			if($newLink == '') $newLink='empty'.$number;
 			add_post_meta($cd_id, 'song', $newInput, false);
 			add_post_meta($cd_id, 'link', $newLink, false);
+			// write new number back
+			update_post_meta($cd_id, 'number',$number);
 		}
 	}
 }
