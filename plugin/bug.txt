@@ -1,4 +1,1 @@
-link and song are independent of each other
-this causes serious problems ~> deletes duplicated or empty metadata
-no idea yet how to solve it
-
+We found no idea for a proper solution yet!
