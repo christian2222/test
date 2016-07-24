@@ -1,4 +1,2 @@
-link and song are independent of each other
-this causes serious problems ~> deletes duplicated or empty metadata
-no idea yet how to solve it
-
+the solution in this branch is to concatenate the song title and song link separated by three backslashes '\\\'.
+This separator divides title from link and SHOULD NEITHER BE USED in song title OR song link! 
