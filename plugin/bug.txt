@@ -1,1 +1,6 @@
-We found no idea for a proper solution yet!
+IDEA: Use a double array:
+first entry is the song title
+second entry is the link
+
+Note: be aware that the length of both arrays is synchronized, when they change
+
