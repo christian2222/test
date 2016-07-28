@@ -202,17 +202,18 @@ function my_custom_box_function($cd) {
 		
 		//  output a checkbox and text input field for each song-->
 		echo '<p><input type="checkbox" name="haken'.$key.'" checked />' . ($key+1) .'. Titel: <input tyüe="text" name="eingabe'. $key.'" value="'.$value.'"/>';
-		echo 'Link: <input type="text" name="link'.$key.'" size="70" value="'.$linkArray[$key].'"</p>';
+		echo 'Link: <input type="text" name="link'.$key.'" size="50" value="'.$linkArray[$key].'"</p>';
 	}
 	// output a text input to add a new song
 	echo '<br>Neuen Titel eingeben';
-	echo '<p>Titel:<input type="text" name="neu" value="" /> Link:<input type="text" name="neulink" value="" size="70"></p>';
+	echo '<p>Titel:<input type="text" name="neu" value="" /> Link:<input type="text" name="neulink" value="" size="50"></p>';
 }
 // add the custom metabox
 add_action( 'add_meta_boxes' , 'my_custom_box_create' );
 
 
 // saving function when "Aktualisieren" is pressed
+// toDo: unite song and link in one string separated by '\\\'
 function cm_cd_save_meta($cd_id) {
 	// check if metadata already exists
 	$number = get_post_meta($cd_id,'number',true);
@@ -260,11 +261,11 @@ function checkUrlForMp3( $string ) {
 	$string = trim($string);
 	// strstr returns the rest of the string, starting at the first occurence of '.mp3'
 	// strstr($string,'.mp3') == '.mp3' or '.MP3'
-	// strpos(string,suchstring,beginn(optional)) searches for the first occurence of [suchstring] in [string] starting at [beginn]
+	// strpos(string,suchstring,begin(optional)) searches for the first occurence of [suchstring] in [string] starting at [begin]
 	// stripos ""					does the same but ignores case
-	// stripos($string, 'http') == 0 nicht false (= nichts gefunden) (j)
-	// stripos($string, 'https') == 0 nicht false (= nichts gefunden) (j)
-	// strpos($string, '://') == 4 oder 5 (index begint bei 0) nicht false (= nichts gefunden)
+	// stripos($string, 'http') == 0 not false (= nothing found) (j)
+	// stripos($string, 'https') == 0 not false (= nothing found) (j)
+	// strpos($string, '://') == 4 oder 5 (index begint bei 0) nicht false (= nothing found)
 	$start = stripos($string, 'http');
 	$sec_start= stripos($string, 'https');
 	if($start === false && $sec_start === false) return false; // both do not appear
