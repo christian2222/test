@@ -194,8 +194,10 @@ function my_custom_box_function($cd) {
 	
 	// $myArray = get_post_meta($cd->ID, 'song', false);
 	// read all songs from meta data
-	$titleArray = get_post_custom_values('song', $cd->ID);
-	$linkArray = get_post_custom_values('link', $cd->ID);
+	// $titleArray = get_post_custom_values('song', $cd->ID);
+	// $linkArray = get_post_custom_values('link', $cd->ID);
+	$multiArray = get_post_custom_values('multi', $cd->ID);
+	// toDo: split each multi entry into title and link
 	// $linkArray[0] = 'Hello';
 	// cycle through the array (value contains the song)
 	foreach((array)$titleArray as $key => $value) {
@@ -222,20 +224,29 @@ function cm_cd_save_meta($cd_id) {
 
 
 	// read old songs from meta data
-	$oldArray = get_post_custom_values('song', $cd_id);
-	$linkArray = get_post_custom_values('link', $cd_id);
+	$oldArray = get_post_custom_values('multi', $cd_id);
+	// $linkArray = get_post_custom_values('link', $cd_id);
+	// $allaRRAY = get_post_custom_values('multi',$cd_id);
+	// coded format for allArray:
+	// [song title]\\\[mp4 adress]
 	//$oldLength = count($oldArray);
 
 
 	// cycle trhough all entries and update their contents by the specific input field
 	foreach((array)$oldArray as $key => $value) {
 		// $key = number, $value = song
-		update_post_meta($cd_id,'song', $_POST[('eingabe'.$key)],$value);
-		update_post_meta($cd_id,'link', $_POST[('link'.$key)],$linkArray[$key]);
+		$multi = $_POST[('eingabe'.$key)] . '\\\\\\' . $_POST[('link'.$key)];
+		// update_post_meta($cd_id,'song', $_POST[('eingabe'.$key)],$value);
+		// update_post_meta($cd_id,'link', $_POST[('link'.$key)],$linkArray[$key]);
+		update_post_meta($cd_id,'multi', $multi);
 		// if there is no checked checkbox delete the data
 		if(! isset($_POST[('haken'.$key)])) {
-			delete_post_meta($cd_id, 'song', $value);
-			delete_post_meta($cd_id, 'link', $linkArray[$key]);
+			// delete_post_meta($cd_id, 'song', $value);
+			// delete_post_meta($cd_id, 'link', $linkArray[$key]);
+			// toDo: delete the multi meta data
+			// generate multi string out of the input fields
+			$del_multi = $_POST[('eingabe'.$key)] . '\\\\\\' . $_POST[('link'.$key)];
+			delete_post_meta($cd_id, 'multi', $del_multi);
 		}
 	}
 	
@@ -248,10 +259,11 @@ function cm_cd_save_meta($cd_id) {
 			// prohibit empty link data
 			$number++;
 			if($newLink == '') $newLink='empty'.$number;
-			add_post_meta($cd_id, 'song', $newInput, false);
-			add_post_meta($cd_id, 'link', $newLink, false);
+			// add_post_meta($cd_id, 'song', $newInput, false);
+			// add_post_meta($cd_id, 'link', $newLink, false);
 			// write new number back
-			update_post_meta($cd_id, 'number',$number);
+			$new_multi = $newInput . '\\\\\\' . $newLink;
+			update_post_meta($cd_id, 'multi',$new_multi);
 		}
 	}
 }
