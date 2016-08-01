@@ -200,11 +200,24 @@ function my_custom_box_function($cd) {
 	// toDo: split each multi entry into title and link
 	// $linkArray[0] = 'Hello';
 	// cycle through the array (value contains the song)
-	foreach((array)$titleArray as $key => $value) {
-		
+	// strstr returns the rest of the string, starting at the first occurence of '.mp3'
+	// strstr($string,'.mp3') == '.mp3' or '.MP3'
+	// strpos(string,suchstring,begin(optional)) searches for the first occurence of [suchstring] in [string] starting at [begin]
+	// stripos ""					does the same but ignores case
+	// stripos($string, 'http') == 0 not false (= nothing found) (j)
+	// stripos($string, 'https') == 0 not false (= nothing found) (j)
+	// strpos($string, '://') == 4 oder 5 (index begint bei 0) nicht false (= nothing found)
+foreach((array)$multiArray as $key => $value) {
+		$multi_str = $value;
+		if(stripos($multi_str,'\\\\\\') != false) {
+			$offset = stripos($multi_str,'\\\\\\');
+			$title_str = substr($multi_str, 0, $offset);
+			$mp3_str = substr($multi_str,$offset);
+
+		}
 		//  output a checkbox and text input field for each song-->
-		echo '<p><input type="checkbox" name="haken'.$key.'" checked />' . ($key+1) .'. Titel: <input tyüe="text" name="eingabe'. $key.'" value="'.$value.'"/>';
-		echo 'Link: <input type="text" name="link'.$key.'" size="50" value="'.$linkArray[$key].'"</p>';
+		echo '<p><input type="checkbox" name="haken'.$key.'" checked />' . ($key+1) .'. Titel: <input tyüe="text" name="eingabe'. $key.'" value="'.$title_str.'"/>';
+		echo 'Link: <input type="text" name="link'.$key.'" size="50" value="'.$mp3_str.'"</p>';
 	}
 	// output a text input to add a new song
 	echo '<br>Neuen Titel eingeben';
