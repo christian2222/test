@@ -12,7 +12,7 @@
 
 
 // global $wpdb;
-
+$separator = 'XXX';
 add_filter( 'the_content', 'table_after_content' );
 
 function after_content( $content ) {
@@ -33,16 +33,40 @@ function after_content( $content ) {
 	return $content;
 }
 
+
+function chop_title($multi) {
+	global $separator;
+	$offset = stripos($multi, $separator);
+	$title_str = substr($multi, 0, $offset);
+	return $title_str;
+}
+
+function hasSeparator($multi) {
+	global $separator;
+	$offset = stripos($multi, $separator);
+	return ($offset != false);
+}
+
+function chop_link($multi) {
+	global $separator;
+	$offset = stripos($multi, $separator);
+	$mp3_str = substr($multi,($offset+strlen($separator)));
+	return $mp3_str;
+}
+
+
 function table_after_content( $content ) {
 
-	$titleArray = get_post_custom_values('song', get_the_ID());
+	$titleArray = get_post_custom_values('multi', get_the_ID());
 	if (is_singular('cd_album') && !empty($titleArray)) {
 		$content .= '';
 		$content .= '<p><h4>Musik-Liste</h4>';
 		$content .= '<table class="table table-hover table-striped">';
-		$content .= '<tr><th>Nr.</th><th>Titel</th></tr>';
+		$content .= '<tr><th>Nr.</th><th>Titel</th><th>Link</th></tr>';
 		foreach((array)$titleArray as $key => $value) {
-			$content .= '<tr><td>' .($key+1). '</td><td>' . $value . '</td></tr>';
+			if(hasSeparator($value)) {
+				$content .= '<tr><td>' .($key+1). '</td><td>' . chop_title($value) . '</td><td>'. chop_link($value) .'</td></tr>'; 
+			}
 		}
 		$content .= '</table></p>';
 	}
@@ -191,7 +215,7 @@ function my_custom_box_create() {
 
 // function that contains the html ocde for the metabox
 function my_custom_box_function($cd) {
-	
+	global $separator;
 	// $myArray = get_post_meta($cd->ID, 'song', false);
 	// read all songs from meta data
 	// $titleArray = get_post_custom_values('song', $cd->ID);
@@ -207,29 +231,32 @@ function my_custom_box_function($cd) {
 	// stripos($string, 'http') == 0 not false (= nothing found) (j)
 	// stripos($string, 'https') == 0 not false (= nothing found) (j)
 	// strpos($string, '://') == 4 oder 5 (index begint bei 0) nicht false (= nothing found)
-foreach((array)$multiArray as $key => $value) {
+	foreach((array)$multiArray as $key => $value) {
 		$multi_str = $value;
-		if(stripos($multi_str,'\\\\\\') != false) {
-			$offset = stripos($multi_str,'\\\\\\');
+		$title_str='';
+	       	$mp3_str='';
+		if(stripos($multi_str,$separator) != false) {
+			$offset = stripos($multi_str,$separator);
 			$title_str = substr($multi_str, 0, $offset);
-			$mp3_str = substr($multi_str,$offset);
+			$mp3_str = substr($multi_str,($offset+strlen($separator)));
 
 		}
 		//  output a checkbox and text input field for each song-->
-		echo '<p><input type="checkbox" name="haken'.$key.'" checked />' . ($key+1) .'. Titel: <input tyüe="text" name="eingabe'. $key.'" value="'.$title_str.'"/>';
-		echo 'Link: <input type="text" name="link'.$key.'" size="50" value="'.$mp3_str.'"</p>';
+		echo '<p><input type="checkbox" name="haken'.$key.'" checked />' . ($key+1) .'. Titel: <input tyüe="text" name="eingabe'. $key.'" value="'.$title_str.'"/><br>';
+		echo 'Link: <input type="text" name="link'.$key.'" size="50" value="'.$mp3_str . '"</p>';
 	}
 	// output a text input to add a new song
 	echo '<br>Neuen Titel eingeben';
-	echo '<p>Titel:<input type="text" name="neu" value="" /> Link:<input type="text" name="neulink" value="" size="50"></p>';
+	echo '<p>Titel:<input type="text" name="neu" value="" /><br> Link:<input type="text" name="neulink" value="" size="50"></p>';
 }
 // add the custom metabox
 add_action( 'add_meta_boxes' , 'my_custom_box_create' );
 
 
 // saving function when "Aktualisieren" is pressed
-// toDo: unite song and link in one string separated by '\\\'
+// unite song and link in one string separated by global variable separator
 function cm_cd_save_meta($cd_id) {
+	global $separator;
 	// check if metadata already exists
 	$number = get_post_meta($cd_id,'number',true);
 	if($number == '') // = not yet set?
@@ -241,25 +268,25 @@ function cm_cd_save_meta($cd_id) {
 	// $linkArray = get_post_custom_values('link', $cd_id);
 	// $allaRRAY = get_post_custom_values('multi',$cd_id);
 	// coded format for allArray:
-	// [song title]\\\[mp4 adress]
+	// [song title]separator[mp4 adress]
 	//$oldLength = count($oldArray);
 
 
 	// cycle trhough all entries and update their contents by the specific input field
 	foreach((array)$oldArray as $key => $value) {
 		// $key = number, $value = song
-		$multi = $_POST[('eingabe'.$key)] . '\\\\\\' . $_POST[('link'.$key)];
+		$multi = $_POST[('eingabe'.$key)] . $separator . $_POST[('link'.$key)];
 		// update_post_meta($cd_id,'song', $_POST[('eingabe'.$key)],$value);
 		// update_post_meta($cd_id,'link', $_POST[('link'.$key)],$linkArray[$key]);
-		update_post_meta($cd_id,'multi', $multi);
+		update_post_meta($cd_id,'multi', $multi, $value);
 		// if there is no checked checkbox delete the data
 		if(! isset($_POST[('haken'.$key)])) {
 			// delete_post_meta($cd_id, 'song', $value);
 			// delete_post_meta($cd_id, 'link', $linkArray[$key]);
-			// toDo: delete the multi meta data
+			// delete the multi meta data
 			// generate multi string out of the input fields
-			$del_multi = $_POST[('eingabe'.$key)] . '\\\\\\' . $_POST[('link'.$key)];
-			delete_post_meta($cd_id, 'multi', $del_multi);
+			// $del_multi = $_POST[('eingabe'.$key)] . $separator . $_POST[('link'.$key)];
+			delete_post_meta($cd_id, 'multi', $multi);
 		}
 	}
 	
@@ -275,8 +302,8 @@ function cm_cd_save_meta($cd_id) {
 			// add_post_meta($cd_id, 'song', $newInput, false);
 			// add_post_meta($cd_id, 'link', $newLink, false);
 			// write new number back
-			$new_multi = $newInput . '\\\\\\' . $newLink;
-			update_post_meta($cd_id, 'multi',$new_multi);
+			$new_multi = $newInput . $separator . $newLink;
+			add_post_meta($cd_id, 'multi',$new_multi);
 		}
 	}
 }
