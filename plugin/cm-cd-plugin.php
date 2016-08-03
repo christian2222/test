@@ -54,6 +54,10 @@ function chop_link($multi) {
 	return $mp3_str;
 }
 
+function mp3_to_player($mp3string) {
+	$string = '<audio controls style="width:100px; display:block;"> <source src="'. $mp3string .'" type="audio/mpeg">No support for the audio(mp3) element.</audio> ';
+	return $string;
+}
 
 function table_after_content( $content ) {
 
@@ -65,7 +69,8 @@ function table_after_content( $content ) {
 		$content .= '<tr><th>Nr.</th><th>Titel</th><th>Link</th></tr>';
 		foreach((array)$titleArray as $key => $value) {
 			if(hasSeparator($value)) {
-				$content .= '<tr><td>' .($key+1). '</td><td>' . chop_title($value) . '</td><td>'. chop_link($value) .'</td></tr>'; 
+				$content .= '<tr><td>' .($key+1). '</td><td>' . chop_title($value) . '</td>';
+				$content .= '<td style="width:250px">'. mp3_to_player(chop_link($value)) .'</td></tr>'; 
 			}
 		}
 		$content .= '</table></p>';
