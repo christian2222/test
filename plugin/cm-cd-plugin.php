@@ -11,6 +11,22 @@
 */
 
 
+// for upload selection
+function cm_cd_manage_admin_scripts() {
+	wp_enqueue_script('media-upload');
+	wp_enqueue_script('thickbox');
+	wp_enqueue_script('jquery');
+}	
+
+function cm_cd_manage_admin_styles() {
+	wp_enqueue_style('thickbox');
+}
+
+add_action('admin_print_scripts', 'cm_cd_manage_admin_scripts');
+add_action('admin_print_styles', 'cm_cd_manage_admin_styles');
+
+
+
 // global $wpdb;
 $separator = 'XXX';
 add_filter( 'the_content', 'table_after_content' );
@@ -236,6 +252,23 @@ function my_custom_box_function($cd) {
 	// stripos($string, 'http') == 0 not false (= nothing found) (j)
 	// stripos($string, 'https') == 0 not false (= nothing found) (j)
 	// strpos($string, '://') == 4 oder 5 (index begint bei 0) nicht false (= nothing found)
+	//
+	// ensure javascript lines
+	echo '<script language="javascript">';
+	echo 'jQuery(docuemnt).ready(function() {';
+	echo '	jQuery(\'#upload_image_button\').click(function() {';
+	echo '		formfield = jQuery(\'#upload_image\').attr(\'name\');';
+	echo '		tb_show(\'\',\'media-upload.php?type=image&TB_iframe=true\');';
+	echo '		return false;';
+	echo '	});';
+	echo '';
+	echo '	window.send_to_editor = function(html) {';
+	echo '		imgurl = jQuery(\'img\',html).attr(\'src\');';
+	echo '		jQuery(\'#upload_image\').val(imgurl);';
+	echo '		tb_remove();';
+	echo '	}';
+	echo '});';
+	echo '</script>';
 	foreach((array)$multiArray as $key => $value) {
 		$multi_str = $value;
 		$title_str='';
@@ -248,11 +281,21 @@ function my_custom_box_function($cd) {
 		}
 		//  output a checkbox and text input field for each song-->
 		echo '<p><input type="checkbox" name="haken'.$key.'" checked />' . ($key+1) .'. Titel: <input tyüe="text" name="eingabe'. $key.'" value="'.$title_str.'"/><br>';
-		echo 'Link: <input type="text" name="link'.$key.'" size="50" value="'.$mp3_str . '"</p>';
+		echo 'Link: <input type="text" name="link'.$key.'" size="50" value="'.$mp3_str . '" /></p>';
 	}
 	// output a text input to add a new song
 	echo '<br>Neuen Titel eingeben';
 	echo '<p>Titel:<input type="text" name="neu" value="" /><br> Link:<input type="text" name="neulink" value="" size="50"></p>';
+	echo '<br><br><br>';
+	echo '<table><tr valign="top">
+	<td>Upload Image</td>
+	<td><label for="upload_image">
+		<input id="upload_image" type="text" size="36" name="upload_image" value="<?php echo $gearimage; ?>" />
+		<input id="upload_image_button" type="button" value="Upload Image" />
+		<br />Enter an URL or upload an image for the banner.
+		</label>
+	</td>
+</tr></table>';
 }
 // add the custom metabox
 add_action( 'add_meta_boxes' , 'my_custom_box_create' );
@@ -343,5 +386,6 @@ function checkUrlForMp3( $string ) {
 }
 
 add_action('save_post', 'cm_cd_save_meta');
+
 
 ?>
