@@ -253,22 +253,42 @@ function my_custom_box_function($cd) {
 	// stripos($string, 'https') == 0 not false (= nothing found) (j)
 	// strpos($string, '://') == 4 oder 5 (index begint bei 0) nicht false (= nothing found)
 	//
-	// ensure javascript lines
-	echo '<script language="javascript">';
-	echo 'jQuery(docuemnt).ready(function() {';
-	echo '	jQuery(\'#upload_image_button\').click(function() {';
-	echo '		formfield = jQuery(\'#upload_image\').attr(\'name\');';
-	echo '		tb_show(\'\',\'media-upload.php?type=image&TB_iframe=true\');';
-	echo '		return false;';
-	echo '	});';
-	echo '';
-	echo '	window.send_to_editor = function(html) {';
-	echo '		imgurl = jQuery(\'img\',html).attr(\'src\');';
-	echo '		jQuery(\'#upload_image\').val(imgurl);';
-	echo '		tb_remove();';
-	echo '	}';
-	echo '});';
-	echo '</script>';
+	// enter javascript lines
+// jQuery
+wp_enqueue_script('jquery');
+// This will enqueue the Media Uploader script
+wp_enqueue_media();
+?>
+    <div>
+    <label for="image_url">MP3-Datei: </label>
+    <input type="text" name="image_url" id="image_url" class="regular-text">
+    <input type="button" name="upload-btn" id="upload-btn" class="button-secondary" value="Aus Mediathek...">
+
+</div>
+<script type="text/javascript">
+jQuery(document).ready(function($){
+    $('#upload-btn').click(function(e) {
+        e.preventDefault();
+        var image = wp.media({ 
+            title: 'MP3-Datei aus Mediathek wählen',
+            // mutiple: true if you want to upload multiple files at once
+            multiple: false
+        }).open()
+        .on('select', function(e){
+            // This will return the selected image from the Media Uploader, the result is an object
+            var uploaded_image = image.state().get('selection').first();
+            // We convert uploaded_image to a JSON object to make accessing it easier
+            // Output to the console uploaded_image
+            console.log(uploaded_image);
+            var image_url = uploaded_image.toJSON().url;
+            // Let's assign the url value to the input field
+            $('#image_url').val(image_url);
+        });
+    });
+});
+</script>
+
+<?php
 	foreach((array)$multiArray as $key => $value) {
 		$multi_str = $value;
 		$title_str='';
@@ -286,16 +306,7 @@ function my_custom_box_function($cd) {
 	// output a text input to add a new song
 	echo '<br>Neuen Titel eingeben';
 	echo '<p>Titel:<input type="text" name="neu" value="" /><br> Link:<input type="text" name="neulink" value="" size="50"></p>';
-	echo '<br><br><br>';
-	echo '<table><tr valign="top">
-	<td>Upload Image</td>
-	<td><label for="upload_image">
-		<input id="upload_image" type="text" size="36" name="upload_image" value="<?php echo $gearimage; ?>" />
-		<input id="upload_image_button" type="button" value="Upload Image" />
-		<br />Enter an URL or upload an image for the banner.
-		</label>
-	</td>
-</tr></table>';
+	echo '<br>';
 }
 // add the custom metabox
 add_action( 'add_meta_boxes' , 'my_custom_box_create' );
