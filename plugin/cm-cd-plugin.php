@@ -234,6 +234,33 @@ function my_custom_box_create() {
 	add_meta_box('mc_box', 'Cd Titel', 'my_custom_box_function', 'cd_album','normal','high');
 }
 
+
+
+function insert_cd_number_entry($number, $title_string, $mp3_string) {
+
+	echo '<p><input type="checkbox" name="haken'.$number.'" checked />' . ($number+1) .'. Titel: <input type="text" name="eingabe'. $number.'" value="'.$title_string.'" class="regular-text" /><br>';
+	echo 'MP3-Link: <input type="text" id="mp3link'.$number.'" name="link'.$number.'" size="50" value="'.$mp3_string . '" class="regular-text" /><input type="button" class="button-secondary" id="mp3btn'.$number.'" name="button'.$number.'" value="Aus Mediathek..." /></p>';
+	insert_cd_javascript('mp3btn'.$number,'mp3link'.$number);
+}
+
+function insert_cd_javascript($button,$link) {
+	echo '<script type="text/javascript">';
+	echo "jQuery(document).ready(function($){";
+	echo "	$('#".$button."').click(function(e) {";
+	echo "		e.preventDefault();";
+	echo "		var file = wp.media({ title: 'MP3-Datei aus Mediathek wählen', multiple: false }).open().on('select', function(e){";
+	echo "			var uploadfile = file.state().get('selection').first();";
+	echo "			console.log(uploadfile);";
+	echo "			var fileurl = uploadfile.toJSON().url;";
+	echo "			$('#".$link."').val(fileurl);";
+	echo "		});"; //wp.media
+	echo "	});"; //$(mp3btn)
+	echo "});"; //jQuery
+	echo "";
+	echo '</script>';
+}
+
+
 // function that contains the html ocde for the metabox
 function my_custom_box_function($cd) {
 	global $separator;
@@ -242,7 +269,6 @@ function my_custom_box_function($cd) {
 	// $titleArray = get_post_custom_values('song', $cd->ID);
 	// $linkArray = get_post_custom_values('link', $cd->ID);
 	$multiArray = get_post_custom_values('multi', $cd->ID);
-	// toDo: split each multi entry into title and link
 	// $linkArray[0] = 'Hello';
 	// cycle through the array (value contains the song)
 	// strstr returns the rest of the string, starting at the first occurence of '.mp3'
@@ -254,35 +280,10 @@ function my_custom_box_function($cd) {
 	// strpos($string, '://') == 4 oder 5 (index begint bei 0) nicht false (= nothing found)
 	//
 	// enter javascript lines
-// jQuery
-wp_enqueue_script('jquery');
-// This will enqueue the Media Uploader script
-wp_enqueue_media();
-// 
-//    <div>
-//    <label for="file_url">MP3-Datei: </label>
-//    <input type="text" name="image_url" id="file_url" class="regular-text">
-//    <input type="button" name="upload-btn" id="upload-btn" class="button-secondary" value="Aus Mediathek...">
-//
-//</div>
-//<script type="text/javascript">
-//jQuery(document).ready(function($){
-//    $('#upload-btn').click(function(e) {
-//        e.preventDefault();
-	   	// mutiple: true if you want to upload multiple files at once
-//	var file = wp.media({ title: 'MP3-Datei aus Mediathek wählen', multiple: false }).open().on('select', function(e){
-//            // This will return the selected image from the Media Uploader, the result is an object
-//            var uploaded_image = file.state().get('selection').first();
-//            // We convert uploaded_image to a JSON object to make accessing it easier
-            // Output to the console uploaded_image
-//            console.log(uploaded_image);
-//            var file_url = uploaded_image.toJSON().url;
-            // Let's assign the url value to the input field
-//            $('#file_url').val(file_url);
-//        });
-//    });
-//});
-//</script>
+	// jQuery
+	wp_enqueue_script('jquery');
+	// This will enqueue the Media Uploader script
+	wp_enqueue_media();
 
 	foreach((array)$multiArray as $key => $value) {
 		$multi_str = $value;
@@ -295,29 +296,16 @@ wp_enqueue_media();
 
 		}
 		//  output a checkbox and text input field for each song-->
-		echo '<p><input type="checkbox" name="haken'.$key.'" checked />' . ($key+1) .'. Titel: <input type="text" name="eingabe'. $key.'" value="'.$title_str.'" class="regular-text" /><br>';
-		echo 'MP3-Link: <input type="text" id="mp3link'.$key.'" name="link'.$key.'" size="50" value="'.$mp3_str . '" class="regular-text" /><input type="button" class="button-secondary" id="mp3btn'.$key.'" name="button'.$key.'" value="Aus Mediathek..." /></p>';
-		echo '<script type="text/javascript">';
-		echo "jQuery(document).ready(function($){";
-		echo "	$('#mp3btn".$key."').click(function(e) {";
-		echo "		e.preventDefault();";
-		echo "		var file = wp.media({ title: 'MP3-Datei aus Mediathek wählen', multiple: false }).open().on('select', function(e){";
-		echo "			var uploadfile = file.state().get('selection').first();";
-		echo "			console.log(uploadfile);";
-		echo "			var fileurl = uploadfile.toJSON().url;";
-		echo "			$('#mp3link".$key."').val(fileurl);";
-		echo "		});"; //wp.media
-		echo "	});"; //$(mp3btn)
-		echo "});"; //jQuery
-		echo "";
-		echo '</script>';
+		insert_cd_number_entry($key,$title_str,$mp3_str);
 		
 	}
 	// output a text input to add a new song
 	echo '<br>Neuen Titel eingeben';
-	echo '<p>Titel:<input type="text" name="neu" value="" /><br> Link:<input type="text" name="neulink" value="" size="50"></p>';
+	echo '<p>Titel:<input type="text" name="neu" id="dazutitle" value="" /><br> Link:<input type="text" name="neulink" id="mp3neu" value="" size="50"><input type="button" class="button-secondary" id="mp3btndazu" name="buttonDazu" value="Aus Mediathek..." /></p>';
+	insert_cd_javascript('mp3btndazu','mp3neu');
 	echo '<br>';
 }
+
 // add the custom metabox
 add_action( 'add_meta_boxes' , 'my_custom_box_create' );
 
