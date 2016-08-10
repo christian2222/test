@@ -28,7 +28,7 @@ add_action('admin_print_styles', 'cm_cd_manage_admin_styles');
 
 
 // global $wpdb;
-$separator = 'XXX';
+$separator = '-----';
 add_filter( 'the_content', 'table_after_content' );
 
 function after_content( $content ) {
@@ -50,31 +50,39 @@ function after_content( $content ) {
 }
 
 
+// cut out title and mp3; check for separator see DOCUMENTATION
+
+// cut the title out of multi string
 function chop_title($multi) {
 	global $separator;
-	$offset = stripos($multi, $separator);
+	$offset = strpos($multi, $separator);
 	$title_str = substr($multi, 0, $offset);
 	return $title_str;
 }
-
+// check for separator - return boolean
 function hasSeparator($multi) {
 	global $separator;
-	$offset = stripos($multi, $separator);
-	return ($offset != false);
+	$offset = strpos($multi, $separator);
+	return ($offset !== false); // remind 0 == false but not 0 === false
+	// even if there is no title, we find the seperator at position 0 (!== false)!
+	// if we use != this won't work, because 0 == false (see php documentation)
 }
 
+// cut the link out of multi string
 function chop_link($multi) {
 	global $separator;
-	$offset = stripos($multi, $separator);
+	$offset = strpos($multi, $separator);
 	$mp3_str = substr($multi,($offset+strlen($separator)));
 	return $mp3_str;
 }
 
+// embed link by audio player tags (due to html5 convention)
 function mp3_to_player($mp3string) {
 	$string = '<audio controls style="width:100px; display:block;"> <source src="'. $mp3string .'" type="audio/mpeg">No support for the audio(mp3) element.</audio> ';
 	return $string;
 }
 
+// draw a title table after content
 function table_after_content( $content ) {
 
 	$titleArray = get_post_custom_values('multi', get_the_ID());
@@ -95,7 +103,7 @@ function table_after_content( $content ) {
 
 }
 
-
+// create posttyoe cd_album and its taxonomy artists
 function cm_cd_createCd() {
 
     register_post_type( 'cd_album',
@@ -235,7 +243,7 @@ function my_custom_box_create() {
 }
 
 
-
+// output cd entry form 
 function insert_cd_number_entry($number, $title_string, $mp3_string) {
 
 	echo '<p><input type="checkbox" name="haken'.$number.'" checked />' . ($number+1) .'. Titel: <input type="text" name="eingabe'. $number.'" value="'.$title_string.'" class="regular-text" /><br>';
@@ -243,6 +251,7 @@ function insert_cd_number_entry($number, $title_string, $mp3_string) {
 	insert_cd_javascript('mp3btn'.$number,'mp3link'.$number);
 }
 
+// output necessary javascript lines
 function insert_cd_javascript($button,$link) {
 	echo '<script type="text/javascript">';
 	echo "jQuery(document).ready(function($){";
@@ -261,47 +270,38 @@ function insert_cd_javascript($button,$link) {
 }
 
 
+
 // function that contains the html ocde for the metabox
 function my_custom_box_function($cd) {
 	global $separator;
-	// $myArray = get_post_meta($cd->ID, 'song', false);
-	// read all songs from meta data
-	// $titleArray = get_post_custom_values('song', $cd->ID);
-	// $linkArray = get_post_custom_values('link', $cd->ID);
+	
 	$multiArray = get_post_custom_values('multi', $cd->ID);
-	// $linkArray[0] = 'Hello';
-	// cycle through the array (value contains the song)
-	// strstr returns the rest of the string, starting at the first occurence of '.mp3'
-	// strstr($string,'.mp3') == '.mp3' or '.MP3'
-	// strpos(string,suchstring,begin(optional)) searches for the first occurence of [suchstring] in [string] starting at [begin]
-	// stripos ""					does the same but ignores case
-	// stripos($string, 'http') == 0 not false (= nothing found) (j)
-	// stripos($string, 'https') == 0 not false (= nothing found) (j)
-	// strpos($string, '://') == 4 oder 5 (index begint bei 0) nicht false (= nothing found)
-	//
-	// enter javascript lines
-	// jQuery
+
+	// require jQuery
 	wp_enqueue_script('jquery');
-	// This will enqueue the Media Uploader script
+	// require the Media Uploader script
 	wp_enqueue_media();
 
+	// cycle through the array (value contains the multi)
 	foreach((array)$multiArray as $key => $value) {
 		$multi_str = $value;
 		$title_str='';
-	       	$mp3_str='';
-		if(stripos($multi_str,$separator) != false) {
+		$mp3_str='';
+		// check for separator
+		if(hasSeparator($multi_str)) {
+			// cut out title and mp3link see DOCUMENTATION
 			$offset = stripos($multi_str,$separator);
 			$title_str = substr($multi_str, 0, $offset);
 			$mp3_str = substr($multi_str,($offset+strlen($separator)));
-
+			//  output a checkbox and text input field for each song
+			insert_cd_number_entry($key,$title_str,$mp3_str);
 		}
-		//  output a checkbox and text input field for each song-->
-		insert_cd_number_entry($key,$title_str,$mp3_str);
 		
 	}
 	// output a text input to add a new song
 	echo '<br>Neuen Titel eingeben';
-	echo '<p>Titel:<input type="text" name="neu" id="dazutitle" value="" /><br> Link:<input type="text" name="neulink" id="mp3neu" value="" size="50"><input type="button" class="button-secondary" id="mp3btndazu" name="buttonDazu" value="Aus Mediathek..." /></p>';
+	echo '<p>Titel:<input type="text" name="neu" id="dazutitle" value="" /><br> Link:<input type="text" name="neulink" id="mp3neu" value="" size="50">';
+	echo '<input type="button" class="button-secondary" id="mp3btndazu" name="buttonDazu" value="Aus Mediathek..." /></p>';
 	insert_cd_javascript('mp3btndazu','mp3neu');
 	echo '<br>';
 }
@@ -315,34 +315,26 @@ add_action( 'add_meta_boxes' , 'my_custom_box_create' );
 function cm_cd_save_meta($cd_id) {
 	global $separator;
 	// check if metadata already exists
-	$number = get_post_meta($cd_id,'number',true);
-	if($number == '') // = not yet set?
+	$number = get_post_meta($cd_id,'number',true); // only one value - no array: hence true
+	if($number == '') // = not yet set? -> set to 1
 		$number = 1;
-
 
 	// read old songs from meta data
 	$oldArray = get_post_custom_values('multi', $cd_id);
-	// $linkArray = get_post_custom_values('link', $cd_id);
-	// $allaRRAY = get_post_custom_values('multi',$cd_id);
-	// coded format for allArray:
+	// coded format for oldArray:
 	// [song title]separator[mp4 adress]
-	//$oldLength = count($oldArray);
 
-
-	// cycle trhough all entries and update their contents by the specific input field
+	// cycle trhough all entries and update their contents by the specific input fields
 	foreach((array)$oldArray as $key => $value) {
-		// $key = number, $value = song
-		$multi = $_POST[('eingabe'.$key)] . $separator . $_POST[('link'.$key)];
-		// update_post_meta($cd_id,'song', $_POST[('eingabe'.$key)],$value);
-		// update_post_meta($cd_id,'link', $_POST[('link'.$key)],$linkArray[$key]);
+		// $key = number, $value = multi
+		
+		// construct multi string out of input fields 
+		$multi = $_POST[('eingabe'.$key)] . $separator . $_POST[('link'.$key)]; // use POST instead of GET, so the user does not see the values in the http adress
+		// update the input
 		update_post_meta($cd_id,'multi', $multi, $value);
 		// if there is no checked checkbox delete the data
 		if(! isset($_POST[('haken'.$key)])) {
-			// delete_post_meta($cd_id, 'song', $value);
-			// delete_post_meta($cd_id, 'link', $linkArray[$key]);
 			// delete the multi meta data
-			// generate multi string out of the input fields
-			// $del_multi = $_POST[('eingabe'.$key)] . $separator . $_POST[('link'.$key)];
 			delete_post_meta($cd_id, 'multi', $multi);
 		}
 	}
@@ -351,30 +343,39 @@ function cm_cd_save_meta($cd_id) {
 	if( (isset($_POST['neu'])) || (isset($_POST['neulink'])) ) {
 		$newInput = strip_tags($_POST['neu']);
 		$newLink = strip_tags($_POST['neulink']);
-		// add new song if the input is not empty
+		// add new multi if the title input is not empty
 		if( $newInput != '') {
 			// prohibit empty link data
 			$number++;
 			if($newLink == '') $newLink='empty'.$number;
-			// add_post_meta($cd_id, 'song', $newInput, false);
-			// add_post_meta($cd_id, 'link', $newLink, false);
-			// write new number back
+			// write new number back (since it was used)
+			update_post_meta($cd_id,'number',$number);
+			// construct new multi string
 			$new_multi = $newInput . $separator . $newLink;
+			// add it as post metadata
 			add_post_meta($cd_id, 'multi',$new_multi);
 		}
 	}
 }
 
+
+// DOCUMENTATION
+// *************
+// strstr returns the rest of the string, starting at the first occurence of '.mp3'
+// strstr($string,'.mp3') == '.mp3' or '.MP3'
+// strpos(string,suchstring,begin(optional)) searches for the first occurence of [suchstring] in [string] starting at [begin]
+// stripos ""					does the same but ignores case
+// stripos($string, 'http') == 0 not false (= nothing found) (j)
+// stripos($string, 'https') == 0 not false (= nothing found) (j)
+// strpos($string, '://') == 4 oder 5 (index begint bei 0) nicht false (= nothing found)
+
+
+
+
 // checks an url to be an mp3 file, ie. start with "http://" or "https://" and ends with ".mp3"
 function checkUrlForMp3( $string ) {
+	// see: DOCUMENTATION
 	$string = trim($string);
-	// strstr returns the rest of the string, starting at the first occurence of '.mp3'
-	// strstr($string,'.mp3') == '.mp3' or '.MP3'
-	// strpos(string,suchstring,begin(optional)) searches for the first occurence of [suchstring] in [string] starting at [begin]
-	// stripos ""					does the same but ignores case
-	// stripos($string, 'http') == 0 not false (= nothing found) (j)
-	// stripos($string, 'https') == 0 not false (= nothing found) (j)
-	// strpos($string, '://') == 4 oder 5 (index begint bei 0) nicht false (= nothing found)
 	$start = stripos($string, 'http');
 	$sec_start= stripos($string, 'https');
 	if($start === false && $sec_start === false) return false; // both do not appear
