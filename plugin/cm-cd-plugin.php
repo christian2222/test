@@ -29,9 +29,9 @@ add_action('admin_print_styles', 'cm_cd_manage_admin_styles');
 
 // global $wpdb;
 $separator = '-----';
-add_filter( 'the_content', 'table_after_content' );
+add_filter( 'the_content', 'cm_cd_table_after_content' );
 
-function after_content( $content ) {
+function cm_cd_after_content( $content ) {
 
 
 	// $table_name = $wpdb->prefix . 'cm_cd_table';
@@ -53,14 +53,15 @@ function after_content( $content ) {
 // cut out title and mp3; check for separator see DOCUMENTATION
 
 // cut the title out of multi string
-function chop_title($multi) {
+function cm_cd_chop_title($multi) {
 	global $separator;
 	$offset = strpos($multi, $separator);
 	$title_str = substr($multi, 0, $offset);
 	return $title_str;
 }
+
 // check for separator - return boolean
-function hasSeparator($multi) {
+function cm_cd_has_separator($multi) {
 	global $separator;
 	$offset = strpos($multi, $separator);
 	return ($offset !== false); // remind 0 == false but not 0 === false
@@ -69,7 +70,7 @@ function hasSeparator($multi) {
 }
 
 // cut the link out of multi string
-function chop_link($multi) {
+function cm_cd_chop_link($multi) {
 	global $separator;
 	$offset = strpos($multi, $separator);
 	$mp3_str = substr($multi,($offset+strlen($separator)));
@@ -77,13 +78,13 @@ function chop_link($multi) {
 }
 
 // embed link by audio player tags (due to html5 convention)
-function mp3_to_player($mp3string) {
+function cm_cd_mp3_to_player($mp3string) {
 	$string = '<audio controls style="width:100px; display:block;"> <source src="'. $mp3string .'" type="audio/mpeg">No support for the audio(mp3) element.</audio> ';
 	return $string;
 }
 
 // draw a title table after content
-function table_after_content( $content ) {
+function cm_cd_table_after_content( $content ) {
 
 	$titleArray = get_post_custom_values('multi', get_the_ID());
 	if (is_singular('cd_album') && !empty($titleArray)) {
@@ -92,9 +93,13 @@ function table_after_content( $content ) {
 		$content .= '<table class="table table-hover table-striped">';
 		$content .= '<tr><th>Nr.</th><th>Titel</th><th>Link</th></tr>';
 		foreach((array)$titleArray as $key => $value) {
-			if(hasSeparator($value)) {
-				$content .= '<tr><td>' .($key+1). '</td><td>' . chop_title($value) . '</td>';
-				$content .= '<td style="width:250px">'. mp3_to_player(chop_link($value)) .'</td></tr>'; 
+			if(cm_cd_has_separator($value)) {
+				$content .= '<tr><td>' .($key+1). '</td><td>' . cm_cd_chop_title($value) . '</td>';
+				$chopped_link = cm_cd_mp3_to_player(cm_cd_chop_link($value));
+				if(cm_cd_check_url_for_mp3(cm_cd_chop_link($value)))
+					$content .= '<td style="width:250px">'. $chopped_link .'</td></tr>'; 
+				else
+					$content .= '<td></td></tr>';
 			}
 		}
 		$content .= '</table></p>';
@@ -238,21 +243,21 @@ add_shortcode('allAlbum', 'cm_cd_type_loop');
 
 
 // tests for a custom metabox
-function my_custom_box_create() {
-	add_meta_box('mc_box', 'Cd Titel', 'my_custom_box_function', 'cd_album','normal','high');
+function cm_cd_create_cd_metabox() {
+	add_meta_box('mc_box', 'Cd Titel', 'cm_cd_metabox_content', 'cd_album','normal','high');
 }
 
 
 // output cd entry form 
-function insert_cd_number_entry($number, $title_string, $mp3_string) {
+function cm_cd_insert_cd_number_entry($number, $title_string, $mp3_string) {
 
 	echo '<p><input type="checkbox" name="haken'.$number.'" checked />' . ($number+1) .'. Titel: <input type="text" name="eingabe'. $number.'" value="'.$title_string.'" class="regular-text" /><br>';
 	echo 'MP3-Link: <input type="text" id="mp3link'.$number.'" name="link'.$number.'" size="50" value="'.$mp3_string . '" class="regular-text" /><input type="button" class="button-secondary" id="mp3btn'.$number.'" name="button'.$number.'" value="Aus Mediathek..." /></p>';
-	insert_cd_javascript('mp3btn'.$number,'mp3link'.$number);
+	cm_cd_insert_cd_javascript('mp3btn'.$number,'mp3link'.$number);
 }
 
 // output necessary javascript lines
-function insert_cd_javascript($button,$link) {
+function cm_cd_insert_cd_javascript($button,$link) {
 	echo '<script type="text/javascript">';
 	echo "jQuery(document).ready(function($){";
 	echo "	$('#".$button."').click(function(e) {";
@@ -272,7 +277,7 @@ function insert_cd_javascript($button,$link) {
 
 
 // function that contains the html ocde for the metabox
-function my_custom_box_function($cd) {
+function cm_cd_metabox_content($cd) {
 	global $separator;
 	
 	$multiArray = get_post_custom_values('multi', $cd->ID);
@@ -288,13 +293,13 @@ function my_custom_box_function($cd) {
 		$title_str='';
 		$mp3_str='';
 		// check for separator
-		if(hasSeparator($multi_str)) {
+		if(cm_cd_has_separator($multi_str)) {
 			// cut out title and mp3link see DOCUMENTATION
 			$offset = stripos($multi_str,$separator);
 			$title_str = substr($multi_str, 0, $offset);
 			$mp3_str = substr($multi_str,($offset+strlen($separator)));
 			//  output a checkbox and text input field for each song
-			insert_cd_number_entry($key,$title_str,$mp3_str);
+			cm_cd_insert_cd_number_entry($key,$title_str,$mp3_str);
 		}
 		
 	}
@@ -302,12 +307,12 @@ function my_custom_box_function($cd) {
 	echo '<br>Neuen Titel eingeben';
 	echo '<p>Titel:<input type="text" name="neu" id="dazutitle" value="" /><br> Link:<input type="text" name="neulink" id="mp3neu" value="" size="50">';
 	echo '<input type="button" class="button-secondary" id="mp3btndazu" name="buttonDazu" value="Aus Mediathek..." /></p>';
-	insert_cd_javascript('mp3btndazu','mp3neu');
+	cm_cd_insert_cd_javascript('mp3btndazu','mp3neu');
 	echo '<br>';
 }
 
 // add the custom metabox
-add_action( 'add_meta_boxes' , 'my_custom_box_create' );
+add_action( 'add_meta_boxes' , 'cm_cd_create_cd_metabox' );
 
 
 // saving function when "Aktualisieren" is pressed
@@ -373,7 +378,7 @@ function cm_cd_save_meta($cd_id) {
 
 
 // checks an url to be an mp3 file, ie. start with "http://" or "https://" and ends with ".mp3"
-function checkUrlForMp3( $string ) {
+function cm_cd_check_url_for_mp3( $string ) {
 	// see: DOCUMENTATION
 	$string = trim($string);
 	$start = stripos($string, 'http');
@@ -382,12 +387,16 @@ function checkUrlForMp3( $string ) {
 	if($start == 0 || $sec_start == 0) { // starts with one of both
 		// check for "://" at position 4 or 5
 		$sub_slash = strpos($string, '://');
-		if($sub_slash === false) return false; // not found
+		// if($sub_slash === false) return false; // not found
 		$cor_slash = ($sub_slash == 4) || ($sub_slash == 5);
+		// debugging: add_post_meta(get_the_ID(), 'error',$sub_slash);
 		// check ending
-		$end = strstr($sring,'.') == '.mp3';
-		$big_end = strstr($string,'.') == '.MP3';
+		$end = substr($string,-4) == '.mp3';
+		// cutting the last 4 charaters of the given string
+		$big_end = substr($string,-4) == '.MP3';
 		// combine for true
+		// if ($cor_slash) return true;
+		// debugging: add_post_meta(get_the_ID(),'error',substr($string,-4));
 		if ($cor_slash && ($end || $big_end)) return true;
 		// otherwise program flow hits return false at the end
 	}
